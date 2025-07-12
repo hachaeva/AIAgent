@@ -26,18 +26,18 @@ def run_python_file(working_directory, file_path):
         if not file_path.endswith(".py"):
             return f'Error: "{file_path}" is not a Python file.'
         run_result = subprocess.run(["python", relative_path], text=True, capture_output = True, timeout=30)
-        first_return_line = f"Executing {relative_path}:\n"
+        first_return_line = f"Executing {relative_path}: "
         stdout_string = "STDOUT:"
         if run_result.stdout:
-            stdout_string = stdout_string + "\n" +  run_result.stdout
+            stdout_string = stdout_string + " " +  run_result.stdout
         stderr_string = "STDERR:"
         if run_result.stderr:
-            stderr_string = stderr_string + "\n" + run_result.stderr
+            stderr_string = stderr_string + " " + run_result.stderr
         else:
-            stderr_string = stderr_string + "\n"
-        return_string = stdout_string + "\n" + stderr_string
+            stderr_string = stderr_string + " "
+        return_string = stdout_string + " " + stderr_string
         if run_result.returncode != 0:
-            return first_return_line + return_string + "\n" + f"Process exited with code {run_result.returncode}."
+            return first_return_line + return_string + " " + f"Process exited with code {run_result.returncode}."
         if not run_result.stdout and not run_result.stderr:
             return first_return_line + "No output produced."
         else:

@@ -7,6 +7,7 @@ from functions.get_files_info import schema_get_files_info
 from functions.get_file_content import schema_get_file_content
 from functions.run_python_file import schema_run_python_file
 from functions.write_file import schema_write_file
+from functions.call_function import call_function
 
 MODEL = "gemini-2.0-flash-001"
 system_prompt = """
@@ -39,6 +40,7 @@ def main():
         verbose_flag = True
     else:
         verbose_flag = False
+    print (f"verbose flag: {verbose_flag}")
 
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
@@ -62,7 +64,13 @@ def main():
     function_calls = response.function_calls
     if len(function_calls) > 0:
         for function_call in function_calls:
-            print (f"Calling function: {function_call.name}({function_call.args})")    
+            #print (f"Calling function: {function_call.name}({function_call.args})")    
+            function_call_result = call_function(function_call, verbose_flag)
+            if not function_call_result.parts[0].function_response.response:
+                raise Exception("Expected a function call response")
+            elif verbose_flag:
+                print(f"-> {function_call_result.parts[0].function_response.response})")
+
     else:
         print (response.text)
 
