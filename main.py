@@ -54,12 +54,10 @@ def main():
     num_responses = 0
     prompt_tokens = 0
     response_tokens = 0
-
-    done = False
     
     response = []
 
-    while num_responses < 20 and not done:
+    while num_responses < 20:
         try:
             response.append(
                 client.models.generate_content(
@@ -94,7 +92,7 @@ def main():
 
             num_responses = num_responses + 1
 
-        except Exception as e:
+        except Exception:
             print(f"Error: function call failed")
             return f"Error: function call failed"
 
