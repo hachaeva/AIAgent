@@ -20,7 +20,9 @@ def call_function(function_call_part,verbose=False):
         "write_file" : write_file
     }
 
+    # Execute a function
     function_result = functions_available[function_name](**function_arguments)
+    #print(f"{function_result}")
 
     if function_call_part.name not in functions_available:
         return types.Content(

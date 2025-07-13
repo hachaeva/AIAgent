@@ -40,7 +40,6 @@ def main():
         verbose_flag = True
     else:
         verbose_flag = False
-    print (f"verbose flag: {verbose_flag}")
 
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
@@ -52,34 +51,57 @@ def main():
     ]
     )
 
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=messages,
-        config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt),
-    )
+    num_responses = 0
+    prompt_tokens = 0
+    response_tokens = 0
 
-    prompt_tokens = response.usage_metadata.prompt_token_count
-    response_tokens = response.usage_metadata.candidates_token_count
+    done = False
+    
+    response = []
 
-    function_calls = response.function_calls
-    if len(function_calls) > 0:
-        for function_call in function_calls:
-            #print (f"Calling function: {function_call.name}({function_call.args})")    
-            function_call_result = call_function(function_call, verbose_flag)
-            if not function_call_result.parts[0].function_response.response:
-                raise Exception("Expected a function call response")
-            elif verbose_flag:
-                print(f"-> {function_call_result.parts[0].function_response.response})")
+    while num_responses < 20 and not done:
+        try:
+            response.append(
+                client.models.generate_content(
+                    model=MODEL,
+                    contents=messages,
+                    config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt),
+                )
+            )
+            
+            prompt_tokens = prompt_tokens + response[num_responses].usage_metadata.prompt_token_count
+            response_tokens = response_tokens + response[num_responses].usage_metadata.candidates_token_count
 
-    else:
-        print (response.text)
+            for candidate in response[num_responses].candidates:
+                for part in candidate.content.parts:
+                    if part.text:
+                        print(part.text)
+                if candidate.content:
+                    messages.append(candidate.content)
+
+            function_calls = response[num_responses].function_calls
+            if function_calls:
+                for function_call in function_calls:  
+                    function_call_result = call_function(function_call, verbose_flag)
+                    if not function_call_result.parts[0].function_response.response:
+                        raise Exception("Expected a function call response")
+                    else:
+                        messages.append(types.Content(role="tool", parts=function_call_result.parts)) 
+                        if verbose_flag: 
+                            print(f"-> {function_call_result.parts[0].function_response.response})")
+            else:
+                break
+
+            num_responses = num_responses + 1
+
+        except Exception as e:
+            print(f"Error: function call failed")
+            return f"Error: function call failed"
 
     if (verbose_flag):
         print (f"User prompt: {user_prompt}")
         print (f"Prompt tokens: {prompt_tokens}")
         print (f"Response tokens: {response_tokens}")
-
-
 
 if __name__ == "__main__":
     main()
